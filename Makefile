@@ -39,7 +39,7 @@ profiles:
 	@docker compose config --services 2>/dev/null || true
 
 test-ci: up-ci
-	bash scripts/wait-and-test.sh
+	node scripts/wait-and-test.mjs
 
 user:
 	node tinyauth/scripts/generate-user.mjs
@@ -48,7 +48,10 @@ provision:
 	node cloudflare/scripts/provision-tunnel.mjs
 
 tunnel-url:
-	bash cloudflare/scripts/extract-tunnel-url.sh
+	node cloudflare/scripts/extract-tunnel-url.mjs
 
 ts-status:
-	bash tailscale/scripts/status.sh
+	node tailscale/scripts/status.mjs
+
+dump-config:
+	node caddy/scripts/dump-config.mjs

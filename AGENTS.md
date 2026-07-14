@@ -54,8 +54,8 @@ README.md                # Human-facing docs
 
 | Kind | Location | Examples |
 |------|----------|----------|
-| Service-only | `<service>/scripts/*` | `tinyauth/scripts/generate-user.mjs`, `cloudflare/scripts/provision-tunnel.mjs`, `cloudflare/scripts/extract-tunnel-url.sh`, `tailscale/scripts/status.sh`, `caddy/scripts/dump-config.sh` |
-| Stack-wide | `scripts/*.sh` | `scripts/up.sh`, `scripts/wait-and-test.sh` |
+| Service-only | `<service>/scripts/*` | `tinyauth/scripts/generate-user.mjs`, `cloudflare/scripts/provision-tunnel.mjs`, `cloudflare/scripts/extract-tunnel-url.mjs`, `tailscale/scripts/status.mjs`, `caddy/scripts/dump-config.mjs` |
+| Stack-wide | `scripts/*.mjs` | `scripts/up.mjs`, `scripts/wait-and-test.mjs` |
 | CI / runner | `scripts/runners/*.mjs` | `scripts/runners/setup-env.mjs`, `scripts/runners/start-stack.mjs`, `scripts/runners/collect-logs.mjs`, `scripts/runners/cache-docker-build-github.mjs` |
 
 Rules:
@@ -63,8 +63,8 @@ Rules:
 - New helper for a single service → that service's `scripts/`.
 - Script that starts/tests/tears down the **whole stack** → root `scripts/`.
 - Script that runs **only in CI / GitHub Actions runner** → `scripts/runners/`.
-- Stack scripts may **call** service scripts (e.g. `wait-and-test.sh` → `cloudflare/scripts/extract-tunnel-url.sh`).
-- Prefer `#!/usr/bin/env bash`, `set -euo pipefail`, and resolve repo root relative to the script path.
+- Stack scripts may **call** service scripts (e.g. `wait-and-test.mjs` → `cloudflare/scripts/extract-tunnel-url.mjs`).
+- Prefer `#!/usr/bin/env node`, `set -euo pipefail` equivalent (process.exit on error), and resolve repo root relative to the script path.
 - Keep scripts executable in CI (`chmod +x` on `scripts` and `*/scripts`).
 
 ### Inline code in YAML — prefer scripts
@@ -75,7 +75,7 @@ Rules:
 |-------|------|-----|
 | CI workflow (`test.yml`) | ≥ 5 lines of bash → move to `scripts/runners/*.mjs` | Testable, reviewable, reusable |
 | Compose YAML | No inline shell; use labels/env/scripts | Compose is declarative; logic belongs in scripts |
-| Script language | `.mjs` (Node.js ES module) for CI runners; `.sh` for service/stack helpers | GitHub Actions runners have Node.js; `.mjs` is cross-platform, testable, no extra deps |
+| Script language | `.mjs` (Node.js ES module) for all scripts | GitHub Actions runners + local dev have Node.js; `.mjs` is cross-platform, testable, no extra deps |
 
 Exceptions (OK to keep inline):
 - ≤ 4 lines of trivial shell (e.g. `echo`, `cat`, single `docker compose` call).
@@ -201,7 +201,7 @@ docker compose --profile tailscale up -d   # CLI adds a profile to the active se
 make up-core
 make up-full
 make profiles
-./scripts/up.sh full
+./scripts/up.mjs full
 ```
 
 ### Multi-file without include (must stay valid)
@@ -285,7 +285,7 @@ Must:
 1. Materialize `.env` from `ENV_FILE` or `.env.ci`.
 2. Detect mode: `TUNNEL_TOKEN` non-empty → **named** (plain compose); else **quick** (`docker-compose.ci.yml`).
 3. Start stack; fail fast if `cloudflared` is not running.
-4. Run `scripts/wait-and-test.sh`:
+4. Run `scripts/wait-and-test.mjs`:
    - require `caddy`, `whoami`, `cloudflared` running;
    - named: `PUBLIC_URL` from `WHOAMI_HOST` / `DOMAIN` (https);
    - quick: extract `https://*.trycloudflare.com` from logs;
@@ -351,13 +351,13 @@ COMPOSE_PROFILES=full docker compose up -d
 # CI / quick tunnel
 cp .env.ci .env        # includes COMPOSE_PROFILES=core
 docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
-./scripts/wait-and-test.sh
+./scripts/wait-and-test.mjs
 
 # Service helpers
 ./tinyauth/scripts/generate-user.mjs
-./cloudflare/scripts/extract-tunnel-url.sh
-./tailscale/scripts/status.sh
-./caddy/scripts/dump-config.sh
+./cloudflare/scripts/extract-tunnel-url.mjs
+./tailscale/scripts/status.mjs
+./caddy/scripts/dump-config.mjs
 ```
 
 ## Commit message template (git-o commithook) — bắt buộc khi kết thúc
@@ -395,7 +395,7 @@ vs quick modes in AGENTS.md and README.
 - [ ] Service YAML named `<service>/<service>.yml`
 - [ ] No optional empty `environment:` injections; catalogs keep unused keys commented
 - [ ] Both paths still valid: **named** (`docker compose up`) and **quick** (`-f docker-compose.ci.yml`)
-- [ ] `wait-and-test.sh` still accepts 302/401 without following redirects
+- [ ] `wait-and-test.mjs` still accepts 302/401 without following redirects
 - [ ] Service has `profiles` (own name + `core` and/or `full` as appropriate)
 - [ ] Scripts live in the correct directory (service vs stack-wide vs runners)
 - [ ] No multi-step inline bash in YAML — extracted to scripts

@@ -62,7 +62,7 @@ jobs:
       - name: Wait and verify external access
         env:
           TEST_TIMEOUT: "180"
-        run: ./scripts/wait-and-test.sh
+        run: node scripts/wait-and-test.mjs
 
       - name: Show public URL
         if: always()

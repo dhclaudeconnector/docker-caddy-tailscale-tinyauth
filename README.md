@@ -22,7 +22,7 @@ Tailnet  ──► Tailscale Serve ──► Caddy   (optional private access)
 | `whoami/whoami.yml` | Demo upstream app |
 | `cloudflare/cloudflare.yml` + `cloudflare/scripts/` | `cloudflared` tunnel (public edge) |
 | `tailscale/tailscale.yml` + `tailscale/scripts/` | Optional Tailscale node + Serve |
-| `scripts/` | **Stack-wide only** (`up.sh`, `wait-and-test.sh`) |
+| `scripts/` | **Stack-wide only** (`up.mjs`, `wait-and-test.mjs`) |
 | `docker-compose.yml` | Joins all service files |
 | `docker-compose.ci.yml` | Quick-tunnel overrides for CI |
 | `AGENTS.md` | Conventions for humans & coding agents |
@@ -76,11 +76,11 @@ Helpers:
 
 ```bash
 chmod +x scripts/*.sh */scripts/*.sh
-./scripts/up.sh                          # stack-wide
-./tinyauth/scripts/generate-user.mjs      # service-local
-./cloudflare/scripts/extract-tunnel-url.sh
-./tailscale/scripts/status.sh
-./caddy/scripts/dump-config.sh
+./scripts/up.mjs                            # stack-wide
+./tinyauth/scripts/generate-user.mjs       # service-local
+./cloudflare/scripts/extract-tunnel-url.mjs
+./tailscale/scripts/status.mjs
+./caddy/scripts/dump-config.mjs
 ```
 
 Service-specific scripts live under `<service>/scripts/`. Only orchestration scripts stay in root `scripts/`. See `AGENTS.md`.
@@ -177,7 +177,7 @@ Workflow: `.github/workflows/test.yml`
 
 1. Writes `secrets.ENV_FILE` → `.env` (or `.env.ci`).
 2. Starts the stack (`docker-compose.ci.yml` only for quick tunnel when no token).
-3. Runs `scripts/wait-and-test.sh`:
+3. Runs `scripts/wait-and-test.mjs`:
    - waits for `caddy`, `whoami`, `cloudflared`
    - discovers `https://*.trycloudflare.com` **or** uses `WHOAMI_HOST` for named tunnels
    - `curl` **without** `-L` (does not follow login redirects)
@@ -203,7 +203,7 @@ docker compose \
 ```bash
 cp .env.ci .env
 docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
-./scripts/wait-and-test.sh
+./scripts/wait-and-test.mjs
 # open the printed trycloudflare.com URL
 ```
 

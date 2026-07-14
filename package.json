@@ -13,9 +13,9 @@
     "logs": "docker compose logs -f --tail=100",
     "ps": "docker compose ps",
     "config": "docker compose config",
-    "tunnel-url": "bash cloudflare/scripts/extract-tunnel-url.sh",
+    "tunnel-url": "node cloudflare/scripts/extract-tunnel-url.mjs",
     "provision": "node cloudflare/scripts/provision-tunnel.mjs",
-    "ts-status": "bash tailscale/scripts/status.sh"
+    "ts-status": "node tailscale/scripts/status.mjs"
   },
   "devDependencies": {
     "bcryptjs": "^2.4.3",
