@@ -144,11 +144,12 @@ async function main() {
   log("Starting opencode analysis (timeout: 5 minutes)...");
   
   const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+  const shortPrompt = "Analyze the attached CI logs and source code. Read the prompt file for full context. Generate a markdown report and write it to ci-logs/analysis/opencode-report.md";
   
   return new Promise((resolve, reject) => {
-    const proc = spawn(opencodePath, [], {
+    const proc = spawn(opencodePath, ["run", "-f", promptFile, "--auto", shortPrompt], {
       cwd: ROOT,
-      stdio: ["pipe", "pipe", "pipe"],
+      stdio: ["ignore", "pipe", "pipe"],
       shell: true,
       env: { ...process.env, FORCE_COLOR: "0" }
     });
@@ -167,10 +168,6 @@ async function main() {
       stderr += str;
       if (!SILENT) process.stderr.write(str);
     });
-    
-    // Send prompt via stdin and close
-    proc.stdin.write(prompt);
-    proc.stdin.end();
     
     // Timeout
     const timer = setTimeout(() => {
