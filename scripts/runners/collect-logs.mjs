@@ -61,7 +61,7 @@ const services = [...new Set([...KNOWN, ...extra])];
 for (const svc of services) {
   console.log(`Collecting logs for: ${svc}`);
   const log = run(`docker compose logs --no-color --timestamps ${svc}`);
-  writeFileSync(`${LOG_DIR}/services/${svc}.log`, log || "(no logs or service not in this run)\n`);
+  writeFileSync(`${LOG_DIR}/services/${svc}.log`, log || "(no logs or service not in this run)\n");
 
   const cid = sh(`docker compose ps -aq ${svc} | head -1`);
   if (cid) {
