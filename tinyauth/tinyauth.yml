@@ -36,7 +36,7 @@ services:
       TINYAUTH_ANALYTICS_ENABLED: ${TINYAUTH_ANALYTICS_ENABLED:-false}
       TINYAUTH_LOG_LEVEL: ${TINYAUTH_LOG_LEVEL:-info}
     volumes:
-      - tinyauth-data:/data
+      - ${DOCKER_VOLUME_DATA:-.ci-data}/tinyauth:/data
     networks:
       - proxy
     labels:
@@ -47,6 +47,3 @@ services:
       - tinyauth
       - core
       - full
-
-volumes:
-  tinyauth-data:

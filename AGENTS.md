@@ -246,6 +246,14 @@ When adding a service, update **both** root `include` and this documented multi-
 5. Document every variable in `.env.example`.
 6. bcrypt / `$` in Compose: use **`$$`** in `.env` / compose so containers receive a single `$`.
 
+### Volume roots
+
+1. Use root `.env` variables for bind-mount roots:
+   - `DOCKER_VOLUME_RUNTIME` defaults to `./ci-runtime` and stores generated runtime files for all services (service state, generated config, logs, tmux/Tailscale/Caddy runtime files).
+   - `DOCKER_VOLUME_DATA` defaults to `.ci-data` and stores app data for current/future app services.
+2. Do not add new named volumes for service runtime/data. Mount under `${DOCKER_VOLUME_RUNTIME:-./ci-runtime}/<service>/...` or `${DOCKER_VOLUME_DATA:-.ci-data}/<service>/...`.
+3. Keep repo/source mounts explicit (for example `..:/srv`) and keep config-file mounts service-local (for example `./serve.json:/config/serve.json:ro`).
+
 ### Env injection rules (both prod and CI — do not regress)
 
 These rules apply to **full named-tunnel config** and **quick-tunnel CI** alike.

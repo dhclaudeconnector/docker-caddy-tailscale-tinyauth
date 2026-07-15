@@ -34,7 +34,7 @@ services:
     working_dir: /workspace
     volumes:
       - ..:/workspace
-      - webssh-tmux:/root
+      - ${DOCKER_VOLUME_RUNTIME:-./ci-runtime}/webssh/root:/root
     networks:
       - proxy
     labels:
@@ -44,6 +44,3 @@ services:
     profiles:
       - webssh
       - full
-
-volumes:
-  webssh-tmux:

@@ -40,7 +40,7 @@ services:
       - --noauth
     volumes:
       - ..:/srv
-      - filebrowser-database:/database
+      - ${DOCKER_VOLUME_DATA:-.ci-data}/filebrowser:/database
     networks:
       - proxy
     labels:
@@ -50,6 +50,3 @@ services:
     profiles:
       - filebrowser
       - full
-
-volumes:
-  filebrowser-database:

@@ -36,8 +36,8 @@ services:
     volumes:
       # Read-only socket — caddy-docker-proxy chỉ cần read. Nếu cần write → cân nhắc tecnativa/docker-socket-proxy.
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      - ${DOCKER_VOLUME_RUNTIME:-./ci-runtime}/caddy/data:/data
+      - ${DOCKER_VOLUME_RUNTIME:-./ci-runtime}/caddy/config:/config
     networks:
       - proxy
     healthcheck:
@@ -55,7 +55,3 @@ services:
       - caddy
       - core
       - full
-
-volumes:
-  caddy-data:
-  caddy-config:

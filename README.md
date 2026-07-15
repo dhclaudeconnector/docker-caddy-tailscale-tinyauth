@@ -151,6 +151,8 @@ Do **not** copy blank lines like `TINYAUTH_SERVER_SOCKETPATH=` — empty optiona
 | `FILEBROWSER_HOST` | Caddy site for protected repo file browser |
 | `WEBSSH_HOSTS` | Caddy sites for protected ttyd/tmux terminal |
 | `TS_AUTHKEY` | Tailscale auth key (profile `tailscale`) |
+| `DOCKER_VOLUME_RUNTIME` | Bind-mount root for generated runtime files, defaults `./ci-runtime` |
+| `DOCKER_VOLUME_DATA` | Bind-mount root for app data, defaults `.ci-data` |
 
 ## Cloudflare named tunnel setup
 
