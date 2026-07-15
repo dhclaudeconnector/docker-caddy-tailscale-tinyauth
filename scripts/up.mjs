@@ -49,6 +49,10 @@ function ensureProfile(name) {
   log(`Ensuring ${name} profile is enabled`);
 }
 
+function resolveVolumeRoot(value, fallback) {
+  return resolve(ROOT, value || fallback);
+}
+
 // Validate .env
 if (!existsSync(".env")) {
   console.error("Missing .env — copy .env.example and fill secrets:");
@@ -94,6 +98,8 @@ if (envGet(ENV, "TS_AUTHKEY")) {
 }
 
 if (hasLitestreamConfig()) ensureProfile("litestream");
+process.env.DOCKER_VOLUME_RUNTIME_ABS = resolveVolumeRoot(envGet(ENV, "DOCKER_VOLUME_RUNTIME"), "ci-runtime");
+process.env.DOCKER_VOLUME_DATA_ABS = resolveVolumeRoot(envGet(ENV, "DOCKER_VOLUME_DATA"), "ci-data");
 
 // Start stack
 run(`node litestream/scripts/generate-config.mjs${SILENT ? " --silent" : ""}`);

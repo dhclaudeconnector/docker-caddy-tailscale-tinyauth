@@ -30,7 +30,7 @@ services:
       # Extra flags
       TS_EXTRA_ARGS: ${TS_EXTRA_ARGS:---accept-dns=false}
     volumes:
-      - ${DOCKER_VOLUME_RUNTIME:-./ci-runtime}/tailscale/state:/var/lib/tailscale
+      - ${DOCKER_VOLUME_RUNTIME_ABS:-../ci-runtime}/tailscale/state:/var/lib/tailscale
       - ./serve.json:/config/serve.json:ro
     networks:
       - proxy

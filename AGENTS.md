@@ -255,7 +255,7 @@ When adding a service, update **both** root `include` and this documented multi-
 1. Use root `.env` variables for bind-mount roots:
    - `DOCKER_VOLUME_RUNTIME` defaults to `./ci-runtime` and stores generated runtime files for all services (service state, generated config, logs, tmux/Tailscale/Caddy runtime files).
    - `DOCKER_VOLUME_DATA` defaults to `./ci-data` and stores app data for current/future app services.
-2. Do not add new named volumes for service runtime/data. Mount under `${DOCKER_VOLUME_RUNTIME:-./ci-runtime}/<service>/...` or `${DOCKER_VOLUME_DATA:-./ci-data}/<service>/...`.
+2. Do not add new named volumes for service runtime/data. Compose service files use internal roots `${DOCKER_VOLUME_RUNTIME_ABS:-../ci-runtime}` and `${DOCKER_VOLUME_DATA_ABS:-../ci-data}` so included service YAML resolves to the repo root; startup helpers derive these from root `.env` `DOCKER_VOLUME_RUNTIME` / `DOCKER_VOLUME_DATA`.
 3. Keep repo/source mounts explicit (for example `..:/srv`) and keep config-file mounts service-local (for example `./serve.json:/config/serve.json:ro`).
 
 ### Litestream data sync

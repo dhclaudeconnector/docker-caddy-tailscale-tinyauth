@@ -142,6 +142,7 @@ node scripts/up.mjs
 ```
 
 Helper sẽ auto-enable profile `litestream` khi thấy `LITESTREAM_<index>_SERVICE`.
+Compose service files mount via internal absolute vars derived by the helpers, so data lands at repo-root `./ci-data`, not under each service folder.
 
 ## Lỗi thường gặp
 

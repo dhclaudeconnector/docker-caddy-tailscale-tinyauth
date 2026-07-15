@@ -32,8 +32,8 @@ services:
       - -config
       - /etc/litestream/litestream.yml
     volumes:
-      - ${DOCKER_VOLUME_DATA:-./ci-data}/litestream:/data
-      - ${DOCKER_VOLUME_RUNTIME:-./ci-runtime}/litestream:/etc/litestream:ro
+      - ${DOCKER_VOLUME_DATA_ABS:-../ci-data}/litestream:/data
+      - ${DOCKER_VOLUME_RUNTIME_ABS:-../ci-runtime}/litestream:/etc/litestream:ro
     networks:
       - proxy
     profiles:

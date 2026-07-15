@@ -22,6 +22,7 @@ services:
   filebrowser:
     image: filebrowser/filebrowser:latest
     container_name: filebrowser
+    user: root
     restart: unless-stopped
     env_file:
       - path: ../.env
@@ -40,7 +41,7 @@ services:
       - --noauth
     volumes:
       - ..:/srv
-      - ${DOCKER_VOLUME_DATA:-./ci-data}/filebrowser:/database
+      - ${DOCKER_VOLUME_DATA_ABS:-../ci-data}/filebrowser:/database
     networks:
       - proxy
     labels:

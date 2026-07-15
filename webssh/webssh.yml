@@ -34,7 +34,7 @@ services:
     working_dir: /workspace
     volumes:
       - ..:/workspace
-      - ${DOCKER_VOLUME_RUNTIME:-./ci-runtime}/webssh/root:/root
+      - ${DOCKER_VOLUME_RUNTIME_ABS:-../ci-runtime}/webssh/root:/root
     networks:
       - proxy
     labels:

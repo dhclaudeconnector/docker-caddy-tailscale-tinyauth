@@ -59,6 +59,10 @@ function ensureProfile(name, envFile) {
   log(`Ensuring ${name} profile is enabled`);
 }
 
+function resolveVolumeRoot(value, fallback) {
+  return resolve(ROOT, value || fallback);
+}
+
 // chmod scripts
 try { run("bash -c 'chmod +x scripts/*.sh */scripts/*.sh 2>/dev/null || chmod +x scripts/*.sh'"); } catch {}
 
@@ -66,6 +70,8 @@ try { run("bash -c 'chmod +x scripts/*.sh */scripts/*.sh 2>/dev/null || chmod +x
 const envFile = resolve(ROOT, ".env");
 log("Active COMPOSE_PROFILES:", envGet(envFile, "COMPOSE_PROFILES") || "(unset)");
 if (hasLitestreamConfig(envFile)) ensureProfile("litestream", envFile);
+process.env.DOCKER_VOLUME_RUNTIME_ABS = resolveVolumeRoot(envGet(envFile, "DOCKER_VOLUME_RUNTIME"), "ci-runtime");
+process.env.DOCKER_VOLUME_DATA_ABS = resolveVolumeRoot(envGet(envFile, "DOCKER_VOLUME_DATA"), "ci-data");
 
 run(`node litestream/scripts/generate-config.mjs${SILENT ? " --silent" : ""}`);
 run(`node litestream/scripts/restore.mjs${SILENT ? " --silent" : ""}`);
