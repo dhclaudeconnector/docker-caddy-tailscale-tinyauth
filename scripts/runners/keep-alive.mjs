@@ -70,32 +70,62 @@ function login(timeout) {
   const password = env.TINYAUTH_CI_PASSWORD;
   if (!url || !username || !password) return false;
   const bodyFile = resolve(tmpdir(), `tinyauth-login-${process.pid}.json`);
+  const headersFile = resolve(tmpdir(), `tinyauth-login-${process.pid}.headers`);
+  const responseFile = resolve(tmpdir(), `tinyauth-login-${process.pid}.body`);
   writeFileSync(bodyFile, JSON.stringify({ username, password }));
-  const cmd = `curl -k -sS -c "${COOKIE_FILE}" -o /dev/null -w "%{http_code}" --max-time ${timeout} -X POST -H "Content-Type: application/json" --data-binary "@${bodyFile}" "${url.replace(/\/$/, "")}/api/login"`;
+  const cmd = `curl -k -sS -D "${headersFile}" -c "${COOKIE_FILE}" -o "${responseFile}" -w "%{http_code}" --max-time ${timeout} -X POST -H "Content-Type: application/json" --data-binary "@${bodyFile}" "${url.replace(/\/$/, "")}/api/login"`;
   if (DRY_RUN) { log(`[DRY RUN] ${cmd.replace(password, "<password>")}`); return true; }
   const code = sh(cmd) || "ERR";
   log(`[auth] ${url}/api/login ${code}`);
+  showHttpDebug("auth", headersFile, responseFile);
+  log(`[auth] cookies=${cookieNames().join(",") || "(none)"}`);
   return code === "200" || code === "204";
 }
 
-function cookieHeader() {
+function cookieRows() {
   if (!existsSync(COOKIE_FILE)) return "";
   return readFileSync(COOKIE_FILE, "utf8")
     .split(/\r?\n/)
     .filter((line) => line && !line.startsWith("#"))
     .map((line) => line.split("\t"))
-    .filter((cols) => cols.length >= 7)
+    .filter((cols) => cols.length >= 7);
+}
+
+function cookieNames() {
+  return cookieRows().map((cols) => cols[5]);
+}
+
+function cookieHeader() {
+  return cookieRows()
     .map((cols) => `${cols[5]}=${cols[6]}`)
     .join("; ");
+}
+
+function mask(value) {
+  return String(value || "")
+    .replace(/(set-cookie:\s*[^=;\s]+)=([^;\r\n]+)/gi, "$1=<hidden>")
+    .replace(/(cookie:\s*)([^\r\n]+)/gi, "$1<hidden>")
+    .replace(/("password"\s*:\s*")[^"]+/gi, "$1<hidden>")
+    .replace(/(token|secret|session|auth|password)=([^;&\s]+)/gi, "$1=<hidden>");
+}
+
+function showHttpDebug(label, headersFile, responseFile) {
+  const headers = existsSync(headersFile) ? readFileSync(headersFile, "utf8").split(/\r?\n/).filter(Boolean).slice(0, 20).join("\n") : "";
+  const body = existsSync(responseFile) ? readFileSync(responseFile, "utf8").slice(0, 500) : "";
+  log(`[${label}] response_headers:\n${mask(headers) || "(none)"}`);
+  log(`[${label}] response_body_sample=${mask(body) || "(empty)"}`);
 }
 
 function curlUrl(item, timeout, useCookie) {
   const header = useCookie ? cookieHeader() : "";
   const cookie = header ? `-H "Cookie: ${header}"` : "";
-  const cmd = `curl -k -sS ${cookie} -o /dev/null -w "%{http_code}" --max-time ${timeout} "${item.url}"`;
+  const headersFile = resolve(tmpdir(), `keep-alive-${process.pid}-${item.service}.headers`);
+  const responseFile = resolve(tmpdir(), `keep-alive-${process.pid}-${item.service}.body`);
+  const cmd = `curl -k -sS ${cookie} -D "${headersFile}" -o "${responseFile}" -w "%{http_code}" --max-time ${timeout} "${item.url}"`;
   if (DRY_RUN) return log(`[DRY RUN] ${cmd}`);
   const code = sh(cmd) || "ERR";
-  log(`[url] ${item.service} ${item.url} ${code}`);
+  log(`[url] ${item.service} ${item.url} ${code} cookie_names=${useCookie ? cookieNames().join(",") || "(none)" : "(disabled)"}`);
+  showHttpDebug(item.service, headersFile, responseFile);
   if (code !== "200") process.exitCode = 1;
 }
 
