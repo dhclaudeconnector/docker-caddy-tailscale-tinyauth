@@ -1,0 +1,11 @@
+{
+  "default_keep_minutes": 5,
+  "default_interval_seconds": 30,
+  "services": [
+    { "name": "whoami", "env": ["CADDY_WHOAMI_HOST", "WHOAMI_HOST"], "fallback": "http://whoami.${DOMAIN}" },
+    { "name": "webssh", "env": ["CADDY_WEBSSH_HOSTS", "WEBSSH_HOSTS"], "fallback": "http://ttyd.${DOMAIN}, http://webssh.${DOMAIN}" },
+    { "name": "filebrowser", "env": ["CADDY_FILEBROWSER_HOST", "FILEBROWSER_HOST"], "fallback": "http://files.${DOMAIN}" },
+    { "name": "dozzle", "env": ["CADDY_DOZZLE_HOSTS", "DOZZLE_HOSTS", "DOZZLE_HOST"], "fallback": "http://dozzle.${DOMAIN}, http://logs.${DOMAIN}" }
+  ],
+  "curl_timeout_seconds": 12
+}
