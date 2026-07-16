@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // scripts/runners/keep-alive.mjs
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "jsonc-parser";
@@ -18,6 +19,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "../..");
 const CONFIG_FILE = resolve(__dirname, "keep-alive-config.jsonc");
 const env = { ...parseEnv(resolve(ROOT, ".env")), ...process.env };
+const COOKIE_FILE = resolve(tmpdir(), `tinyauth-cookies-${process.pid}.txt`);
 
 process.chdir(ROOT);
 
@@ -49,6 +51,10 @@ function splitUrls(value) {
   return expand(value).split(",").map((url) => url.trim()).filter(Boolean);
 }
 
+function authUrl() {
+  return env.TINYAUTH_APPURL || env.CADDY_TINYAUTH_HOST || env.TINYAUTH_HOST || "";
+}
+
 function serviceUrls(config) {
   const urls = [];
   for (const service of config.services || []) {
@@ -58,11 +64,27 @@ function serviceUrls(config) {
   return urls;
 }
 
-function curlUrl(item, timeout) {
-  const cmd = `curl -k -sS -o /dev/null -w "%{http_code}" --max-time ${timeout} -I "${item.url}"`;
+function login(timeout) {
+  const url = authUrl();
+  const username = env.TINYAUTH_CI_USER;
+  const password = env.TINYAUTH_CI_PASSWORD;
+  if (!url || !username || !password) return false;
+  const bodyFile = resolve(tmpdir(), `tinyauth-login-${process.pid}.json`);
+  writeFileSync(bodyFile, JSON.stringify({ username, password }));
+  const cmd = `curl -k -sS -c "${COOKIE_FILE}" -o /dev/null -w "%{http_code}" --max-time ${timeout} -X POST -H "Content-Type: application/json" --data-binary "@${bodyFile}" "${url.replace(/\/$/, "")}/api/login"`;
+  if (DRY_RUN) { log(`[DRY RUN] ${cmd.replace(password, "<password>")}`); return true; }
+  const code = sh(cmd) || "ERR";
+  log(`[auth] ${url}/api/login ${code}`);
+  return code === "200" || code === "204";
+}
+
+function curlUrl(item, timeout, useCookie) {
+  const cookie = useCookie ? `-b "${COOKIE_FILE}"` : "";
+  const cmd = `curl -k -sS ${cookie} -o /dev/null -w "%{http_code}" --max-time ${timeout} "${item.url}"`;
   if (DRY_RUN) return log(`[DRY RUN] ${cmd}`);
   const code = sh(cmd) || "ERR";
   log(`[url] ${item.service} ${item.url} ${code}`);
+  if (code !== "200") process.exitCode = 1;
 }
 
 function runningContainers() {
@@ -95,6 +117,7 @@ if (!detectDocker().available) {
 }
 
 log(`Keeping stack alive for ${keepSeconds}s, heartbeat every ${intervalSeconds}s. URL: ${publicUrl}`);
+const loggedIn = login(config.curl_timeout_seconds);
 
 let elapsed = 0;
 let since = new Date().toISOString();
@@ -105,7 +128,7 @@ while (elapsed < keepSeconds) {
   log(`[heartbeat] ${new Date().toISOString()} ${elapsed}/${keepSeconds}s`);
   const ps = sh(dockerCmd("compose ps"));
   if (ps) log(ps);
-  for (const item of serviceUrls(config)) curlUrl(item, config.curl_timeout_seconds);
+  for (const item of serviceUrls(config)) curlUrl(item, config.curl_timeout_seconds, loggedIn);
   showLogs(since);
   since = new Date().toISOString();
   if (DRY_RUN) break;

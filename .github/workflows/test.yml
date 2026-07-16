@@ -77,6 +77,9 @@ jobs:
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: node scripts/runners/setup-env.mjs
 
+      - name: Add Tinyauth CI bot
+        run: node scripts/runners/setup-tinyauth-ci-user.mjs
+
       # ── Stack ─────────────────────────────────────────────────────
       - name: Start stack
         run: node scripts/runners/start-stack.mjs
