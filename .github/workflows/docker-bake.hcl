@@ -2,18 +2,22 @@ variable "GIT_SHA" {
   default = "unknown"
 }
 
+variable "REGISTRY_CACHE" {
+  default = "ghcr.io/hoahien7281/docker-caddy-tailscale-tinyauth"
+}
+
 function "labels" {
   params = [target]
   result = {
     "org.opencontainers.image.revision" = GIT_SHA
-    "org.opencontainers.image.source" = "https://github.com/${env("REGISTRY_CACHE")}"
+    "org.opencontainers.image.source" = "https://github.com/${REGISTRY_CACHE}"
     "org.opencontainers.image.title" = target
   }
 }
 
 function "cache_ref" {
   params = [name]
-  result = ["type=gha,scope=${name}", "type=registry,ref=${env("REGISTRY_CACHE")}/${name}:buildcache"]
+  result = ["type=gha,scope=${name}", "type=registry,ref=${REGISTRY_CACHE}/${name}:buildcache"]
 }
 
 group "default" {
