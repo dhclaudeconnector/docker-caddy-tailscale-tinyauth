@@ -101,7 +101,7 @@ jobs:
   - job: apps
     displayName: "Validate and build apps"
     steps:
-      - task: NodeTool@0
+      - task: UseNode@1
         inputs:
           versionSpec: "20.x"
         displayName: "Use Node 20"
