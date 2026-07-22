@@ -331,6 +331,7 @@ async function main() {
   console.log(`Ingress:         ${ingress.length} rules`);
   for (const rule of ingress) console.log(`  ${rule.hostname} -> ${rule.service}`);
   console.log(`Catch-all:       ${catchAll}`);
+  console.log(`Always HTTPS:    ${zoneId ? "will enable" : "skip (no zone ID)"}`);
   console.log(`DNS records:`);
   for (const h of fqdns) console.log(`  CNAME  ${h} -> {tunnel_id}.cfargotunnel.com  (proxied)`);
   console.log("─".repeat(60));
@@ -386,6 +387,10 @@ async function main() {
     for (const h of fqdns) {
       console.log(`  GET  /zones/{zone_id}/dns_records?type=CNAME&name=${h}`);
       console.log(`  POST /zones/{zone_id}/dns_records  (create/update CNAME)`);
+    }
+    if (zoneId) {
+      console.log(`  GET  /zones/${zoneId}/settings/always_use_https  (check current)`);
+      console.log(`  PATCH /zones/${zoneId}/settings/always_use_https  (enable)`);
     }
 
     console.log(`\n[DRY RUN] No API calls or .env writes performed.`);
@@ -524,6 +529,38 @@ async function main() {
       }
       showStep(`CNAME ${h} -> ${target}`, res);
       if (!res.success) hasFailure = true;
+    }
+  }
+
+  // Enable "Always Use HTTPS" (zone setting)
+  if (zoneId) {
+    console.log(`\n==> Enabling "Always Use HTTPS"...`);
+
+    // Check current status first
+    const current = await cf("GET", `/zones/${zoneId}/settings/always_use_https`, null, authHeaders);
+    if (current.success) {
+      const currentValue = current.result?.value;
+      if (currentValue === "on") {
+        showStep("Always Use HTTPS already enabled", current);
+      } else {
+        // Enable it
+        const res = await cf("PATCH", `/zones/${zoneId}/settings/always_use_https`, { value: "on" }, authHeaders);
+        if (res.success) {
+          const newValue = res.result?.value;
+          if (newValue === "on") {
+            showStep(`Always Use HTTPS: ${currentValue} → ${newValue}`, res);
+          } else {
+            console.log(`  ⚠  Always Use HTTPS: API returned success but value is "${newValue}" (expected "on")`);
+            hasFailure = true;
+          }
+        } else {
+          showStep("Enable Always Use HTTPS failed", res);
+          hasFailure = true;
+        }
+      }
+    } else {
+      showStep("Check Always Use HTTPS status failed", current);
+      hasFailure = true;
     }
   }
 
