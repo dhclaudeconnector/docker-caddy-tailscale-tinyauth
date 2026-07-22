@@ -13,7 +13,7 @@ import { execSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
-import { envGet, envHasKey, envKeys, exportCiVar, parseEnv } from "../lib/env-utils.mjs";
+import { envGet, envHasKey, envKeys, exportCiVar, maskCiSecret, parseEnv } from "../lib/env-utils.mjs";
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");
@@ -45,6 +45,14 @@ function showEnvKeys() {
 
 function envAppend(line) {
   appendFileSync(ENV, line + "\n");
+}
+
+const SECRET_KEY_RE = /(TOKEN|SECRET|PASSWORD|PASS|AUTH|KEY|COOKIE|CREDENTIAL|CLIENT_ID|CLIENT_SECRET|USERS|SERVICE_ACCOUNT|ACCOUNT_ID)/i;
+function maskAllSecrets() {
+  const parsed = parseEnv(ENV);
+  for (const [k, v] of Object.entries(parsed)) {
+    if (SECRET_KEY_RE.test(k) && v) maskCiSecret(v);
+  }
 }
 
 // 1. Write .env — three sources, checked in priority order:
@@ -94,6 +102,7 @@ if (DRY_RUN) {
 }
 const envSource = DOTENVRTDB_URL ? "DOTENVRTDB_URL" : (ENV_FILE ? "ENV_FILE" : ".env.ci");
 log(`ENV source: ${envSource}`);
+maskAllSecrets();
 showEnvKeys();
 
 // 2. Ensure required Tinyauth vars for quick mode

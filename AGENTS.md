@@ -320,6 +320,23 @@ These rules apply to **full named-tunnel config** and **quick-tunnel CI** alike.
 
 3. **Tinyauth-only keys for the process** must be documented `TINYAUTH_*`. Hostnames for Caddy labels use `TINYAUTH_HOST` / `CADDY_TINYAUTH_HOST` / `WHOAMI_HOST` — never invent process env for labels.
 
+### Secret masking — `::add-mask::` for all ENV_FILE secrets
+
+`setup-env.mjs` calls `maskAllSecrets()` after writing `.env` from `ENV_FILE` /
+`DOTENVRTDB_URL` / `.env.ci`. This iterates every key-value pair and calls
+`maskCiSecret(value)` for keys matching the secret pattern
+`/(TOKEN|SECRET|PASSWORD|PASS|AUTH|KEY|COOKIE|CREDENTIAL|CLIENT_ID|CLIENT_SECRET|USERS|SERVICE_ACCOUNT|ACCOUNT_ID)/i`.
+
+This ensures all secrets from the `.env` file are registered with GitHub Actions'
+`::add-mask::` **before** any subsequent step logs compose config, docker inspect,
+or container output. Without this, secrets could appear unmasked in CI logs even
+though `showEnvKeys()` displays them as asterisks.
+
+Callers of `maskCiSecret`:
+- `setup-env.mjs` → `maskAllSecrets()` — all `.env` secrets
+- `ssh-setup-env.mjs` → `mask()` — SSH passwords + private keys
+- `setup-tinyauth-ci-user.mjs` — CI bot password
+
 ### .env parsing — use dotenv, not regex
 
 Every `.mjs` script that reads values from `.env` **must** use `dotenv.parse()` (via the shared `scripts/lib/env-utils.mjs` helper). Do **not** hand-roll regex like `/^KEY=(.+)$/m`.
