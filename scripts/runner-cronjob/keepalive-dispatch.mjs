@@ -425,7 +425,9 @@ async function ensureCronJobOrg(ctx, nextRunAt) {
 async function ensureEasyCron(ctx, nextRunAt) {
   if (!channelConfigured("CRONJOB_EASYCRON_ENABLE", ["CRONJOB_EASYCRON_API_KEY"])) return null;
   const apiKey = env("CRONJOB_EASYCRON_API_KEY");
+  const pat = resolveDispatchPat();
   if (!apiKey) throw new Error("EasyCron needs CRONJOB_EASYCRON_API_KEY.");
+  if (!pat) throw new Error("EasyCron needs CRONJOB_DISPATCH_PAT (or GITHUB_TOKEN / Azure System.AccessToken).");
   const cfg = config().channels.easycron;
   const tz = env("CRONJOB_TZ", "Asia/Bangkok");
 
@@ -463,7 +465,9 @@ async function ensureEasyCron(ctx, nextRunAt) {
 async function ensureFastCron(ctx, nextRunAt) {
   if (!channelConfigured("CRONJOB_FASTCRON_ENABLE", ["CRONJOB_FASTCRON_TOKEN"])) return null;
   const token = env("CRONJOB_FASTCRON_TOKEN");
+  const pat = resolveDispatchPat();
   if (!token) throw new Error("FastCron needs CRONJOB_FASTCRON_TOKEN.");
+  if (!pat) throw new Error("FastCron needs CRONJOB_DISPATCH_PAT (or GITHUB_TOKEN / Azure System.AccessToken).");
   const cfg = config().channels.fastcron;
   const tz = env("CRONJOB_TZ", "Asia/Bangkok");
 
